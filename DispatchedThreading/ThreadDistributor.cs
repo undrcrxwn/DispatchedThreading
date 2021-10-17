@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace DispatchedThreading
-
 {
     public class ThreadDistributor<TPayload>
     {
@@ -32,11 +31,9 @@ namespace DispatchedThreading
                 int delta = value - _ThreadCount;
                 _ThreadCount = value;
 
-                // if delta is positive
                 for (var i = 0; i < delta; i++)
                     Distribute();
 
-                // if delta is negative
                 if (delta < 0)
                     superfluousDistributonsCount -= delta;
             }

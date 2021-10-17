@@ -1,6 +1,5 @@
 ﻿using DispatchedThreading;
-using System;
-using System.Collections.Generic;
+
 namespace Examples
 {
     public enum AccountState

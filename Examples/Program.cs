@@ -3,13 +3,12 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Examples
 {
     public class Program
     {
-        private static readonly int THREAD_COUNT = 2;
+        private static readonly int INITIAL_THREAD_COUNT = 2;
         private static readonly int TIMEOUT_IN_SECONDS = 5;
         private static readonly string INPUT =
             @"pitchayanant_2541@hotmail.com:otto2541
@@ -57,7 +56,7 @@ namespace Examples
 
             // Initialize thread distributor
             distributor = new ThreadDistributor<Account>(
-                THREAD_COUNT,           // Initial thread count
+                INITIAL_THREAD_COUNT,   // Initial thread count
                 accounts,               // Payloads
                 ReserveAccount,         // Payload-picker predicate
                 checker.ProcessAccount, // Payload handler
@@ -87,7 +86,7 @@ namespace Examples
             Console.WriteLine($"Thread count = {distributor.ThreadCount}\n");
 
             Thread.Sleep(2000);
-            Console.WriteLine("\nDistributor is still working...");
+            Console.WriteLine("\nDistributor is still running...");
 
             Thread.Sleep(2000);
             Console.WriteLine("But we are going to add another account...\n");
