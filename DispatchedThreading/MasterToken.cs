@@ -10,9 +10,27 @@ namespace DispatchedThreading
         public bool IsCancellationRequested { get; private set; }
         public bool IsPauseRequested { get; private set; }
 
-        public void Cancel() => IsCancellationRequested = true;
-        public void Pause() => IsPauseRequested = true;
-        public void Continue() => IsPauseRequested = false;
+        public event Action<MasterToken> Canceled;
+        public event Action<MasterToken> Paused;
+        public event Action<MasterToken> Continued;
+
+        public void Cancel()
+        {
+            IsCancellationRequested = true;
+            Canceled?.Invoke(this);
+        }
+
+        public void Pause()
+        {
+            IsPauseRequested = true;
+            Paused?.Invoke(this);
+        }
+
+        public void Continue()
+        {
+            IsPauseRequested = false;
+            Continued?.Invoke(this);
+        }
 
         public void ThrowIfCancellationRequested()
         {

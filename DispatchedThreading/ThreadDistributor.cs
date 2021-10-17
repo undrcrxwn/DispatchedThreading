@@ -10,10 +10,9 @@ namespace DispatchedThreading
 {
     public class ThreadDistributor<TPayload>
     {
-        public MasterToken SelfToken;
-        public MasterTokenSource InternalTokenSource = new MasterTokenSource();
-        public event EventHandler<TPayload> OnTaskCompleted;
+        public event EventHandler<TPayload> TaskCompleted;
 
+        private MasterToken token;
         private ObservableCollection<TPayload> payloads;
         private Func<TPayload, bool> predicate;
         private Action<TPayload> handler;
@@ -48,30 +47,29 @@ namespace DispatchedThreading
             ObservableCollection<TPayload> payloads,
             Func<TPayload, bool> predicate,
             Action<TPayload> handler,
-            MasterToken token)
+            MasterToken token = null)
         {
-            SelfToken = token;
-            token.Pause();
+            this.token = token ?? new MasterToken();
+            this.token.Pause();
+
+            ThreadCount = threadCount;
             this.payloads = payloads;
             this.predicate = predicate;
             this.handler = handler;
-            OnTaskCompleted += (sender, e) => Distribute();
-            ThreadCount = threadCount;
+
+            TaskCompleted += (sender, e) => Distribute();
         }
 
-        public ThreadDistributor(
-            int threadCount,
-            ObservableCollection<TPayload> payloads,
-            Func<TPayload, bool> predicate,
-            Action<TPayload> handler)
-        : this(threadCount, payloads, predicate, handler, new MasterToken()) { }
+        public void Start() => token.Continue();
+
+        public void Stop() => token.Pause();
 
         public void Distribute()
         {
             // New distribution
             Task.Factory.StartNew(() =>
             {
-                SelfToken.ThrowOrWaitIfRequested();
+                token.ThrowOrWaitIfRequested();
                 lock (abortionLocker)
                 {
                     if (superfluousDistributonsCount > 0)
@@ -81,7 +79,7 @@ namespace DispatchedThreading
                     }
                 }
 
-                SelfToken.ThrowOrWaitIfRequested();
+                token.ThrowOrWaitIfRequested();
                 TPayload payload;
                 try
                 {
@@ -95,10 +93,10 @@ namespace DispatchedThreading
                     return;
                 }
 
-                SelfToken.ThrowOrWaitIfRequested();
+                token.ThrowOrWaitIfRequested();
                 try { handler(payload); }
                 catch { return; }
-                OnTaskCompleted?.Invoke(this, payload);
+                TaskCompleted?.Invoke(this, payload);
 
                 Thread.CurrentThread.Abort();
             },
